@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { INSTRUCTIONS, type InstructionGroup } from '../../engine/instructions';
 import { CONTROL_BITS, SENSOR_BITS } from '../../hardware/ports';
 import type { EventLogEntry, ExecLogEntry } from '../../sim/simulation';
@@ -11,6 +11,8 @@ interface Props {
   /** Changes whenever the logs may have changed. */
   version: number;
   onJumpToLine(line: number): void;
+  /** Replaces the railway port reference in the "I/O map" tab. */
+  ioMap?: ReactNode;
 }
 
 const KIND_LABEL: Record<EventLogEntry['kind'], string> = {
@@ -142,10 +144,10 @@ function IsaView() {
   );
 }
 
-export function LogPanel({ events, trace, version, onJumpToLine }: Props) {
+export function LogPanel({ events, trace, version, onJumpToLine, ioMap }: Props) {
   const [tab, setTab] = useState<Tab>(() => {
     try {
-      return (localStorage.getItem('raillogic.logTab') as Tab) || 'events';
+      return (localStorage.getItem('hex86.logTab') as Tab) || 'events';
     } catch {
       return 'events';
     }
@@ -153,7 +155,7 @@ export function LogPanel({ events, trace, version, onJumpToLine }: Props) {
   const [filter, setFilter] = useState<'all' | 'io' | 'world'>('all');
   useEffect(() => {
     try {
-      localStorage.setItem('raillogic.logTab', tab);
+      localStorage.setItem('hex86.logTab', tab);
     } catch {
       /* storage unavailable */
     }
@@ -189,7 +191,7 @@ export function LogPanel({ events, trace, version, onJumpToLine }: Props) {
       </header>
       {tab === 'events' && <EventsView events={events} version={version} filter={filter} />}
       {tab === 'trace' && <TraceView trace={trace} version={version} onJumpToLine={onJumpToLine} />}
-      {tab === 'io' && <IoMapView />}
+      {tab === 'io' && (ioMap ?? <IoMapView />)}
       {tab === 'isa' && <IsaView />}
     </section>
   );

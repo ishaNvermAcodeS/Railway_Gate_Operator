@@ -193,7 +193,7 @@ export function assemble(source: string): AssembleResult {
     const operands = splitOperands(operandText, offset + mnemonicText.length + 1);
 
     if (mnemonic.startsWith('.') || ['ORG', 'DD', 'DQ', 'SEGMENT', 'ENDS', 'ASSUME', 'PROC', 'ENDP', 'END', 'MODEL', 'CODE', 'DATA', 'STACK'].includes(mnemonic)) {
-      error(lineNo, mnemonicCol, mnemonicText.length, `Directive "${mnemonicText}" is not supported. RailLogic programs are plain instruction lists; only labels, EQU constants and DB/DW data are needed.`);
+      error(lineNo, mnemonicCol, mnemonicText.length, `Directive "${mnemonicText}" is not supported. Hex86 programs are plain instruction lists; only labels, EQU constants and DB/DW data are needed.`);
       return;
     }
     if (operands.length > 0 && /^EQU$/i.test(operands[0].text.split(/\s+/)[0] ?? '')) {

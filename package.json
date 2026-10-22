@@ -1,8 +1,8 @@
 {
-  "name": "raillogic",
+  "name": "hex86",
   "private": true,
   "version": "1.0.0",
-  "description": "RailLogic — 8086 assembly railway level-crossing simulator",
+  "description": "Hex86 — 8086 assembly and hardware simulation platform",
   "type": "module",
   "scripts": {
     "dev": "vite",

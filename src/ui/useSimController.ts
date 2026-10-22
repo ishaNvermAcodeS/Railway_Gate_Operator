@@ -1,9 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assemble } from '../engine/assembler';
 import type { Diagnostic, Program } from '../engine/types';
+import type { Machine, StopReason } from '../sim/machine';
+import { PlaygroundMachine } from '../sim/playground';
 import { getScenario } from '../sim/scenarios';
-import { Simulation, type StopReason } from '../sim/simulation';
+import { Simulation } from '../sim/simulation';
 import { createWorld } from '../sim/world';
+
+export type Mode = 'railway' | 'playground';
+
+/** A Playground Run stops after this many instructions without HLT, so infinite loops are caught. */
+export const PLAYGROUND_BUDGET = 1_000_000;
+
+function createMachine(mode: Mode, program: Program, scenarioId: string): Machine {
+  return mode === 'railway' ? new Simulation(program, getScenario(scenarioId)) : new PlaygroundMachine(program);
+}
 
 export interface SpeedOption {
   id: string;
@@ -32,19 +43,19 @@ export interface Notice {
   text: string;
 }
 
-export function useSimController(initialSource: string, initialScenario: string) {
+export function useSimController(initialSource: string, initialScenario: string, mode: Mode = 'railway', initialSpeed = '2x') {
   const [source, setSourceState] = useState(initialSource);
   const [scenarioId, setScenarioId] = useState(initialScenario);
   const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
   const [assembledSource, setAssembledSource] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [speedId, setSpeedId] = useState('2x');
+  const [speedId, setSpeedId] = useState(initialSpeed);
   const [breakpoints, setBreakpoints] = useState<ReadonlySet<number>>(new Set());
   const [notice, setNotice] = useState<Notice | null>(null);
   const [, setFrame] = useState(0);
   const [revealToken, setRevealToken] = useState(0);
 
-  const simRef = useRef<Simulation | null>(null);
+  const simRef = useRef<Machine | null>(null);
   const rafRef = useRef<number | null>(null);
   const bpRef = useRef(breakpoints);
   bpRef.current = breakpoints;
@@ -66,13 +77,16 @@ export function useSimController(initialSource: string, initialScenario: string)
     setRunning(false);
   }, []);
 
-  const describeStop = useCallback((sim: Simulation, reason: StopReason): Notice => {
+  const describeStop = useCallback((sim: Machine, reason: StopReason): Notice => {
     switch (reason) {
       case 'breakpoint':
         return { tone: 'info', text: `Breakpoint hit at line ${sim.currentLine}` };
       case 'fault':
         return { tone: 'error', text: sim.cpu.fault ?? 'CPU fault' };
       case 'done': {
+        if (!(sim instanceof Simulation)) {
+          return { tone: 'ok', text: `Program halted after ${sim.cpu.retired.toLocaleString()} instructions` };
+        }
         const v = sim.world.stats.violations;
         return v === 0
           ? { tone: 'ok', text: `Scenario complete — no safety violations` }
@@ -85,7 +99,7 @@ export function useSimController(initialSource: string, initialScenario: string)
 
   /** Assembles the current source and starts a fresh session. Returns the simulation or null. */
   const doAssemble = useCallback(
-    (src = source, scen = scenarioId): Simulation | null => {
+    (src = source, scen = scenarioId): Machine | null => {
       stopLoop();
       const result = assemble(src);
       setDiagnostics(result.diagnostics);
@@ -97,7 +111,7 @@ export function useSimController(initialSource: string, initialScenario: string)
         bump();
         return null;
       }
-      const sim = new Simulation(result.program, getScenario(scen));
+      const sim = createMachine(mode, result.program, scen);
       simRef.current = sim;
       setAssembledSource(src);
       setNotice({ tone: 'ok', text: `Assembled ${result.program.instructions.length} instructions, ${result.program.labels.size} labels` });
@@ -105,10 +119,10 @@ export function useSimController(initialSource: string, initialScenario: string)
       bump();
       return sim;
     },
-    [source, scenarioId, stopLoop, bump],
+    [source, scenarioId, mode, stopLoop, bump],
   );
 
-  const ensureSim = useCallback((): Simulation | null => {
+  const ensureSim = useCallback((): Machine | null => {
     if (simRef.current && assembledSource !== null) return simRef.current;
     return doAssemble();
   }, [assembledSource, doAssemble]);
@@ -121,6 +135,7 @@ export function useSimController(initialSource: string, initialScenario: string)
     }
     setNotice(null);
     setRunning(true);
+    const budgetEnd = sim.tick + PLAYGROUND_BUDGET;
     let last = performance.now();
     let acc = 0;
     let first = true;
@@ -136,6 +151,7 @@ export function useSimController(initialSource: string, initialScenario: string)
         n = Math.max(n, 1); // always make progress so "continue" leaves a breakpoint
         first = false;
       }
+      if (mode === 'playground') n = Math.min(n, Math.max(0, budgetEnd - sim.tick));
       if (n > 0) {
         const r = sim.runFor(n, bpRef.current);
         if (r.reason !== 'budget') {
@@ -146,11 +162,21 @@ export function useSimController(initialSource: string, initialScenario: string)
           return;
         }
       }
+      if (mode === 'playground' && sim.tick >= budgetEnd) {
+        stopLoop();
+        setNotice({
+          tone: 'warn',
+          text: `Execution budget reached: ${PLAYGROUND_BUDGET.toLocaleString()} instructions without HLT (possible infinite loop). Continue runs another ${PLAYGROUND_BUDGET.toLocaleString()}.`,
+        });
+        setRevealToken((t) => t + 1);
+        bump();
+        return;
+      }
       bump();
       rafRef.current = requestAnimationFrame(frame);
     };
     rafRef.current = requestAnimationFrame(frame);
-  }, [ensureSim, stopLoop, describeStop, bump]);
+  }, [ensureSim, stopLoop, describeStop, bump, mode]);
 
   const pause = useCallback(() => {
     stopLoop();
@@ -221,12 +247,12 @@ export function useSimController(initialSource: string, initialScenario: string)
       setScenarioId(id);
       if (simRef.current && assembledSource !== null) {
         stopLoop();
-        simRef.current = new Simulation(simRef.current.program, getScenario(id));
+        simRef.current = createMachine(mode, simRef.current.program, id);
         setNotice({ tone: 'info', text: `Scenario: ${getScenario(id).name}` });
         bump();
       }
     },
-    [assembledSource, stopLoop, bump],
+    [assembledSource, stopLoop, bump, mode],
   );
 
   const setSource = useCallback((s: string) => setSourceState(s), []);
@@ -255,6 +281,8 @@ export function useSimController(initialSource: string, initialScenario: string)
   useEffect(() => () => stopLoop(), [stopLoop]);
 
   const sim = simRef.current;
+  const railSim = sim instanceof Simulation ? sim : null;
+  const playSim = sim instanceof PlaygroundMachine ? sim : null;
   const program: Program | null = sim?.program ?? null;
   const stale = assembledSource !== null && assembledSource !== source;
 
@@ -279,8 +307,11 @@ export function useSimController(initialSource: string, initialScenario: string)
     scenarioId,
     selectScenario,
     sim,
+    railSim,
+    playSim,
+    bump,
     program,
-    world: sim?.world ?? idleWorld,
+    world: railSim?.world ?? idleWorld,
     stale,
     runState,
     running,

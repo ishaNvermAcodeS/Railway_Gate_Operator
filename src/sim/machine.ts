@@ -1,5 +1,5 @@
 /**
- * Generic execution core: a CPU attached to some
+ * Generic execution core shared by Railway Lab and the 8086 Playground: a CPU attached to some
  * virtual hardware, advanced one instruction per tick, with checkpoints for
  * deterministic step-back / seek, breakpoints and bounded logs.
  *
@@ -152,6 +152,12 @@ export abstract class Machine<D = unknown> {
 
   reset(): void {
     this.seek(0);
+  }
+
+  /** Drops checkpoints after the current tick (used when inputs change, so the future is recomputed). */
+  protected discardFuture(): void {
+    for (const k of [...this.checkpoints.keys()]) if (k > this.tick) this.checkpoints.delete(k);
+    this.maxTick = this.tick;
   }
 
 

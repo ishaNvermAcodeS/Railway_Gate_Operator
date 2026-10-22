@@ -3,9 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
+    <script>
+      // Apply the saved theme before first paint (same rule as src/ui/theme.ts).
+      try {
+        var t = localStorage.getItem('hex86.theme');
+        if (t !== 'dark' && t !== 'light') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>RailLogic — 8086 Crossing Simulator</title>
+    <title>Hex86 — 8086 Assembly &amp; Hardware Simulation Platform</title>
   </head>
   <body>
     <div id="root"></div>

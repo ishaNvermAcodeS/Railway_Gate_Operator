@@ -2,7 +2,8 @@ import Editor, { type OnMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor/editor/editor.api.js';
 import { memo, useEffect, useRef } from 'react';
 import type { Diagnostic } from '../../engine/types';
-import { LANGUAGE_ID, THEME_ID } from './asmLanguage';
+import { useTheme } from '../theme';
+import { LANGUAGE_ID, THEME_ID, THEME_LIGHT_ID } from './asmLanguage';
 import './monacoSetup';
 
 export type LineState = 'paused' | 'running' | 'fault';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 function AsmEditorImpl({ value, onChange, diagnostics, currentLine, lineState, breakpoints, onToggleBreakpoint, onBreakpointsMoved, revealToken, jumpTo }: Props) {
+  const { theme } = useTheme();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof Monaco | null>(null);
   const lineDeco = useRef<Monaco.editor.IEditorDecorationsCollection | null>(null);
@@ -56,7 +58,7 @@ function AsmEditorImpl({ value, onChange, diagnostics, currentLine, lineState, b
       if (lines.join() !== current.join()) movedRef.current(lines);
     });
     editor.addAction({
-      id: 'raillogic.toggleBreakpoint',
+      id: 'hex86.toggleBreakpoint',
       label: 'Toggle Breakpoint',
       keybindings: [monaco.KeyCode.F9],
       run: (ed) => {
@@ -76,7 +78,7 @@ function AsmEditorImpl({ value, onChange, diagnostics, currentLine, lineState, b
     if (!editor || !monaco || !model) return;
     monaco.editor.setModelMarkers(
       model,
-      'raillogic',
+      'hex86',
       diagnostics.map((d) => ({
         severity: d.severity === 'error' ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
         message: d.message,
@@ -138,7 +140,7 @@ function AsmEditorImpl({ value, onChange, diagnostics, currentLine, lineState, b
   return (
     <Editor
       language={LANGUAGE_ID}
-      theme={THEME_ID}
+      theme={theme === 'light' ? THEME_LIGHT_ID : THEME_ID}
       value={value}
       onChange={(v) => onChange(v ?? '')}
       onMount={handleMount}

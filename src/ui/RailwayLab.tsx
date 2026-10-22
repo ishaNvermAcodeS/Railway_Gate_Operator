@@ -11,21 +11,21 @@ import { EditorPane, ExecControls, getDraft, RunPill, SampleSelect, SpeedSelect,
 
 /** Railway Lab: the level-crossing simulator, unchanged in layout and behaviour. */
 export function RailwayLab() {
-  const draft = getDraft(DEFAULT_SAMPLE);
-  const c = useSimController(draft.source, SCENARIOS[0].id);
+  const draft = getDraft('railway', DEFAULT_SAMPLE);
+  const c = useSimController(draft.source, SCENARIOS[0].id, 'railway');
   const [sampleId, setSampleId] = useState(draft.sampleId);
   const { jumpTo, jump } = useJump();
   const workspaceRef = useRef<HTMLElement>(null);
   const rightRef = useRef<HTMLDivElement>(null);
   const cols = useSplit('cols', 0.4, 0.22, 0.7);
   const rows = useSplit('rows', 0.58, 0.3, 0.8);
-  useWorkbench(c, sampleId);
+  useWorkbench(c, 'railway', sampleId);
 
-  const sim = c.sim;
+  const sim = c.railSim;
 
   return (
     <div className="app">
-      <TopBar right={<RunPill state={c.runState} />}>
+      <TopBar mode="railway" right={<RunPill state={c.runState} />}>
         <SampleSelect c={c} samples={SAMPLES} sampleId={sampleId} onSampleId={setSampleId} />
         <ExecControls c={c} />
         <div className="tb-group">

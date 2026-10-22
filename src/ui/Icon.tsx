@@ -11,9 +11,11 @@ const PATHS: Record<string, string> = {
   check: 'M2.5 8.5l3.5 3.5 7.5-8',
   bp: 'M8 3a5 5 0 1 0 0 10A5 5 0 0 0 8 3z',
   arrow: 'M3 8h10M9 4l4 4-4 4',
+  sun: 'M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6L13 13M3 13l1.4-1.4M11.6 4.4L13 3',
+  moon: 'M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z',
 };
 
-const STROKED = new Set(['build', 'check', 'arrow']);
+const STROKED = new Set(['build', 'check', 'arrow', 'sun']);
 
 export function Icon({ name, size = 14 }: { name: keyof typeof PATHS | string; size?: number }) {
   const d = PATHS[name];

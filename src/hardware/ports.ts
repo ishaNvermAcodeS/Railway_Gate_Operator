@@ -1,5 +1,5 @@
 /**
- * Virtual I/O map of the RailLogic level-crossing controller board.
+ * Virtual I/O map of the Hex86 level-crossing controller board.
  *
  *   Port 02h  OUT  control latch   (lights, buzzer, gate motor, fault lamp)
  *   Port 03h  IN   sensor inputs   (train detectors, gate limit switches)

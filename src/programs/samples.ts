@@ -6,7 +6,7 @@ export interface SampleProgram {
 }
 
 const BASIC = `; ==============================================================
-;  RailLogic · Basic level-crossing controller
+;  Hex86 · Basic level-crossing controller
 ; --------------------------------------------------------------
 ;  Port 02h OUT  bit0 LIGHTS   bit1 BUZZER  bit2 GATE (1=lower)
 ;                bit3 FAULT
@@ -59,7 +59,7 @@ WAIT_UP: IN   AL, SENSORS
 `;
 
 const SUPERVISED = `; ==============================================================
-;  RailLogic · Supervised controller with fault detection
+;  Hex86 · Supervised controller with fault detection
 ; --------------------------------------------------------------
 ;  Adds to the basic controller:
 ;   * barrier timeout supervision (GATE_DN must close in ~5 s)
@@ -142,7 +142,7 @@ SETOUT: OR   AL, BL
 `;
 
 const NAIVE = `; ==============================================================
-;  RailLogic · Naive controller  (deliberately UNSAFE)
+;  Hex86 · Naive controller  (deliberately UNSAFE)
 ; --------------------------------------------------------------
 ;  Reacts only to the island detector, i.e. when the train is
 ;  already on the road. Run it and watch the safety monitor.
@@ -161,7 +161,7 @@ OPEN:   MOV  AL, 0
 `;
 
 const SELFTEST = `; ==============================================================
-;  RailLogic · Commissioning self-test
+;  Hex86 · Commissioning self-test
 ; --------------------------------------------------------------
 ;  Exercises every output with LOOP delays, then cycles the
 ;  barriers and checks both limit switches. Ends with HLT.

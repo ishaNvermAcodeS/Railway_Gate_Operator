@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPoi
 export function useSplit(key: string, initial: number, min = 0.2, max = 0.8) {
   const [fraction, setFraction] = useState(() => {
     try {
-      const v = Number(localStorage.getItem(`raillogic.split.${key}`));
+      const v = Number(localStorage.getItem(`hex86.split.${key}`));
       return v >= min && v <= max ? v : initial;
     } catch {
       return initial;
@@ -12,7 +12,7 @@ export function useSplit(key: string, initial: number, min = 0.2, max = 0.8) {
   });
   useEffect(() => {
     try {
-      localStorage.setItem(`raillogic.split.${key}`, String(fraction));
+      localStorage.setItem(`hex86.split.${key}`, String(fraction));
     } catch {
       /* storage unavailable */
     }

@@ -3,7 +3,8 @@ import { INSTRUCTIONS, KNOWN_UNSUPPORTED } from '../../engine/instructions';
 import { REG16, REG8 } from '../../engine/registers';
 
 export const LANGUAGE_ID = 'asm8086';
-export const THEME_ID = 'raillogic-dark';
+export const THEME_ID = 'hex86-dark';
+export const THEME_LIGHT_ID = 'hex86-light';
 
 let registered = false;
 
@@ -140,6 +141,43 @@ export function registerAsmLanguage(monaco: typeof Monaco): void {
       'scrollbarSlider.hoverBackground': '#3a444c',
       'editorError.foreground': '#f07178',
       'editorWarning.foreground': '#e8b45c',
+    },
+  });
+
+  monaco.editor.defineTheme(THEME_LIGHT_ID, {
+    base: 'vs',
+    inherit: true,
+    rules: [
+      { token: 'comment', foreground: '8a959e', fontStyle: 'italic' },
+      { token: 'keyword', foreground: '9a6400' },
+      { token: 'keyword.directive', foreground: '7b4fc9' },
+      { token: 'invalid', foreground: 'c9372c', fontStyle: 'underline' },
+      { token: 'variable.predefined', foreground: '11708a' },
+      { token: 'type.identifier', foreground: '3b7a14' },
+      { token: 'constant', foreground: '7b4fc9' },
+      { token: 'identifier', foreground: '1d2730' },
+      { token: 'number', foreground: 'b4501f' },
+      { token: 'number.hex', foreground: 'b4501f' },
+      { token: 'number.binary', foreground: 'b4501f' },
+      { token: 'string', foreground: '3b7a14' },
+      { token: 'delimiter', foreground: '75828c' },
+    ],
+    colors: {
+      'editor.background': '#ffffff',
+      'editor.foreground': '#1d2730',
+      'editorLineNumber.foreground': '#b3bcc3',
+      'editorLineNumber.activeForeground': '#46545f',
+      'editor.lineHighlightBackground': '#f4f6f8',
+      'editor.lineHighlightBorder': '#00000000',
+      'editor.selectionBackground': '#cfe2f3',
+      'editorCursor.foreground': '#9a6400',
+      'editorGutter.background': '#ffffff',
+      'editorWidget.background': '#f6f8fa',
+      'editorWidget.border': '#cdd5db',
+      'editorHoverWidget.background': '#ffffff',
+      'editorHoverWidget.border': '#cdd5db',
+      'editorError.foreground': '#c9372c',
+      'editorWarning.foreground': '#9a6400',
     },
   });
 }

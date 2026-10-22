@@ -1,13 +1,14 @@
 /**
- * Railway Lab workspace building blocks: top bar, execution controls,
- * editor pane, status bar and debugger shortcuts.
+ * Building blocks shared by Railway Lab and the 8086 Playground: top bar,
+ * execution controls, editor pane, status bar and debugger shortcuts.
  */
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { SampleProgram } from '../programs/samples';
 import { AsmEditor, type LineState } from './editor/AsmEditor';
 import { Icon } from './Icon';
 import { ProblemsPanel } from './panels/ProblemsPanel';
-import { SPEEDS, type RunState, type SimController } from './useSimController';
+import { useTheme } from './theme';
+import { SPEEDS, type Mode, type RunState, type SimController } from './useSimController';
 
 const RUN_STATE_LABEL: Record<RunState, string> = {
   edit: 'EDIT',
@@ -18,11 +19,11 @@ const RUN_STATE_LABEL: Record<RunState, string> = {
   fault: 'CPU FAULT',
 };
 
-/** Editor contents survive navigating to the home page and back (not page reloads). */
-let draft: { source: string; sampleId: string } | null = null;
+/** Editor contents per mode survive in-app navigation (not page reloads). */
+const drafts = new Map<Mode, { source: string; sampleId: string }>();
 
-export function getDraft(fallback: SampleProgram) {
-  return draft ?? { source: fallback.source, sampleId: fallback.id };
+export function getDraft(mode: Mode, fallback: SampleProgram) {
+  return drafts.get(mode) ?? { source: fallback.source, sampleId: fallback.id };
 }
 
 export function Logo({ size = 22 }: { size?: number }) {
@@ -36,16 +37,41 @@ export function Logo({ size = 22 }: { size?: number }) {
   );
 }
 
-export function TopBar({ children, right }: { children: ReactNode; right?: ReactNode }) {
+export function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  const next = theme === 'dark' ? 'light' : 'dark';
+  return (
+    <button className="btn btn--icon theme-toggle" onClick={toggle} title={`Switch to ${next} theme`} aria-label={`Switch to ${next} theme`}>
+      <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
+    </button>
+  );
+}
+
+export function ModeSwitch({ mode }: { mode: Mode }) {
+  return (
+    <nav className="mode-switch" aria-label="Mode">
+      <a href="#/playground" className={mode === 'playground' ? 'mode-switch--on' : ''} aria-current={mode === 'playground' ? 'page' : undefined}>
+        8086 Playground
+      </a>
+      <a href="#/railway" className={mode === 'railway' ? 'mode-switch--on' : ''} aria-current={mode === 'railway' ? 'page' : undefined}>
+        Railway Lab
+      </a>
+    </nav>
+  );
+}
+
+export function TopBar({ mode, children, right }: { mode: Mode; children: ReactNode; right?: ReactNode }) {
   return (
     <header className="toolbar">
       <a className="brand" href="#/" title="Back to the home page">
         <Logo />
-        <span className="brand__name">RailLogic</span>
+        <span className="brand__name">Hex86</span>
       </a>
+      <ModeSwitch mode={mode} />
       {children}
       <div className="tb-spacer" />
       {right}
+      <ThemeToggle />
     </header>
   );
 }
@@ -210,7 +236,7 @@ export function StatusBar({ c }: { c: SimController }) {
 }
 
 /** First load: assemble the example so Run works immediately. Also wires debugger shortcuts. */
-export function useWorkbench(c: SimController, sampleId: string) {
+export function useWorkbench(c: SimController, mode: Mode, sampleId: string) {
   const booted = useRef(false);
   useEffect(() => {
     if (booted.current) return;
@@ -219,8 +245,8 @@ export function useWorkbench(c: SimController, sampleId: string) {
   }, [c.actions]);
 
   useEffect(() => {
-    draft = { source: c.source, sampleId };
-  }, [c.source, sampleId]);
+    drafts.set(mode, { source: c.source, sampleId });
+  }, [mode, c.source, sampleId]);
 
   // Debugger keyboard shortcuts (captured before Monaco sees them).
   const latest = useRef(c);

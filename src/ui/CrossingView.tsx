@@ -140,7 +140,7 @@ function Barrier({ side, pos }: { side: 'N' | 'S'; pos: number }) {
         <rect x={0} y={-3.5} width={length} height={7} rx={2.5} fill="#e9e4da" />
         <rect x={0} y={-3.5} width={length} height={7} rx={2.5} fill="url(#boomStripes)" />
       </g>
-      <rect x={pivotX - 8} y={pivotY - 8} width={16} height={16} rx={3} fill="#2a3238" stroke="#4a555e" />
+      <rect x={pivotX - 8} y={pivotY - 8} width={16} height={16} rx={3} fill="var(--sc-housing)" stroke="var(--sc-housing-line)" />
     </g>
   );
 }
@@ -149,7 +149,7 @@ function LampMast({ x, y, lit, phase }: { x: number; y: number; lit: boolean; ph
   const on = (i: 0 | 1) => lit && phase === i;
   return (
     <g>
-      <rect x={x - 19} y={y - 8} width={38} height={16} rx={8} fill="#15191c" stroke="#3a444c" />
+      <rect x={x - 19} y={y - 8} width={38} height={16} rx={8} fill="var(--sc-mast)" stroke="var(--sc-mast-line)" />
       {[0, 1].map((i) => (
         <g key={i}>
           {on(i as 0 | 1) && <circle cx={x - 9 + i * 18} cy={y} r={16} fill="url(#lampGlow)" />}
@@ -184,8 +184,8 @@ function ElevationInset({ pos, x, y }: { pos: number; x: number; y: number }) {
       <text x={142} y={14} textAnchor="end" className="inset-value">
         {Math.round(85 * (1 - pos))}°
       </text>
-      <line x1={10} x2={140} y1={78} y2={78} stroke="#3a444c" />
-      <rect x={24} y={52} width={10} height={26} fill="#2a3238" stroke="#4a555e" />
+      <line x1={10} x2={140} y1={78} y2={78} stroke="var(--sc-mast-line)" />
+      <rect x={24} y={52} width={10} height={26} fill="var(--sc-housing)" stroke="var(--sc-housing-line)" />
       <g transform={`translate(29 56) rotate(${angle})`}>
         <rect x={0} y={-2} width={100} height={4} rx={1.5} fill="#e9e4da" />
         <rect x={0} y={-2} width={100} height={4} rx={1.5} fill="url(#boomStripes)" />
@@ -210,10 +210,10 @@ export function CrossingView({ world, control, sensors, scenario }: Props) {
     <svg viewBox={`0 0 ${W} ${H}`} className="crossing-svg" role="img" aria-label="Railway level crossing simulation">
       <defs>
         <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-          <circle cx="1" cy="1" r="0.8" fill="#222a30" />
+          <circle cx="1" cy="1" r="0.8" fill="var(--sc-grid)" />
         </pattern>
         <pattern id="sleepers" width="10" height="24" patternUnits="userSpaceOnUse">
-          <rect x="1" y="0" width="5" height="24" fill="#2b3237" />
+          <rect x="1" y="0" width="5" height="24" fill="var(--sc-sleeper)" />
         </pattern>
         <pattern id="boomStripes" width="18" height="8" patternUnits="userSpaceOnUse">
           <rect x="9" y="0" width="9" height="8" fill="#d84a43" />
@@ -232,21 +232,21 @@ export function CrossingView({ world, control, sensors, scenario }: Props) {
         </linearGradient>
       </defs>
 
-      <rect width={W} height={H} fill="#121619" />
+      <rect width={W} height={H} fill="var(--sc-bg)" />
       <rect width={W} height={H} fill="url(#grid)" />
 
       {/* road */}
-      <rect x={CX - ROAD_HALF - 6} y={roadTop} width={(ROAD_HALF + 6) * 2} height={roadBottom - roadTop} fill="#1b2024" />
-      <rect x={CX - ROAD_HALF} y={roadTop} width={ROAD_HALF * 2} height={roadBottom - roadTop} fill="#22282c" />
-      <line x1={CX - ROAD_HALF} x2={CX - ROAD_HALF} y1={roadTop} y2={roadBottom} stroke="#3a4248" />
-      <line x1={CX + ROAD_HALF} x2={CX + ROAD_HALF} y1={roadTop} y2={roadBottom} stroke="#3a4248" />
+      <rect x={CX - ROAD_HALF - 6} y={roadTop} width={(ROAD_HALF + 6) * 2} height={roadBottom - roadTop} fill="var(--sc-shoulder)" />
+      <rect x={CX - ROAD_HALF} y={roadTop} width={ROAD_HALF * 2} height={roadBottom - roadTop} fill="var(--sc-road)" />
+      <line x1={CX - ROAD_HALF} x2={CX - ROAD_HALF} y1={roadTop} y2={roadBottom} stroke="var(--sc-road-edge)" />
+      <line x1={CX + ROAD_HALF} x2={CX + ROAD_HALF} y1={roadTop} y2={roadBottom} stroke="var(--sc-road-edge)" />
       <line x1={CX} x2={CX} y1={roadTop} y2={py(-GEOMETRY.stopLine)} className="road-center" />
       <line x1={CX} x2={CX} y1={py(GEOMETRY.stopLine)} y2={roadBottom} className="road-center" />
       <line x1={CX - ROAD_HALF} x2={CX} y1={py(-GEOMETRY.stopLine)} y2={py(-GEOMETRY.stopLine)} className="stop-line" />
       <line x1={CX} x2={CX + ROAD_HALF} y1={py(GEOMETRY.stopLine)} y2={py(GEOMETRY.stopLine)} className="stop-line" />
 
       {/* tracks */}
-      <rect x={0} y={TRACK_N - 20} width={W} height={TRACK_S - TRACK_N + 40} fill="#171b1e" />
+      <rect x={0} y={TRACK_N - 20} width={W} height={TRACK_S - TRACK_N + 40} fill="var(--sc-track)" />
       <Rails y={TRACK_N} />
       <Rails y={TRACK_S} />
       <text x={14} y={TRACK_N - 26} className="track-label">TRACK 1 · WESTBOUND ←</text>

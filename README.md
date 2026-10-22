@@ -1,6 +1,11 @@
-# RailLogic — 8086 Railway Crossing Simulator
+# Hex86 — 8086 Assembly & Hardware Simulation Platform
 
-RailLogic is a browser-based teaching tool. You write 8086 assembly in the editor, assemble it, and the program drives a simulated railway level crossing through virtual I/O ports. The trains, barriers, warning lamps, buzzer and road traffic all respond to what your program writes to the ports, and the sensors your program reads come from the simulated world. Nothing in the scene follows a pre-recorded animation.
+Hex86 is a browser-based teaching tool built on a custom 8086 execution engine. It has two modes that share the same assembler, CPU and debugger:
+
+- **8086 Playground**: general-purpose 8086 programs (arithmetic, loops, arrays, subroutines) with a program-output console, LEDs, switches and a memory view. No railway hardware is attached.
+- **Railway Lab**: your program drives a simulated railway level crossing through virtual I/O ports.
+
+In Railway Lab, you write 8086 assembly in the editor, assemble it, and the program drives a simulated railway level crossing through virtual I/O ports. The trains, barriers, warning lamps, buzzer and road traffic all respond to what your program writes to the ports, and the sensors your program reads come from the simulated world. Nothing in the scene follows a pre-recorded animation.
 
 Built with React, TypeScript and Vite. The CPU engine has no UI dependencies and is unit-tested on its own.
 
@@ -15,9 +20,27 @@ npm run build      # type-check and production build into dist/
 
 Requires Node 20+. Monaco is bundled locally, so the app works without internet once installed. That makes it suitable for a lecture hall.
 
-The app opens on a home page; **Open Railway Lab** takes you to the simulator, and the RailLogic logo brings you back. The **Basic controller** sample is already assembled there. Press **F5** to run it, or **F10** to single-step.
+The app opens on a landing page where you pick **8086 Playground** or **Railway Lab**. The mode switch in the top bar moves between them, and the Hex86 logo returns to the landing page. Each mode opens with a sample already assembled: press **F5** to run it, or **F10** to single-step.
 
-## Using the workspace
+**Theme:** the sun/moon button in the top bar switches the whole app (editor, simulator, panels and indicators) between dark and light. The choice is saved in `localStorage` and restored on reload. Until you choose, the app follows your system setting.
+
+## 8086 Playground
+
+The same engine and debugger as Railway Lab, attached to general-purpose devices instead of the crossing:
+
+| Port | Dir | Device |
+|---|---|---|
+| 10h | OUT | Console: prints AL as an ASCII character (0Ah = new line) |
+| 11h | OUT | Prints AL or AX as an unsigned decimal number, then a new line |
+| 12h | OUT | Prints AL or AX in hex, then a new line |
+| 20h | OUT | Eight LEDs |
+| 30h | IN | Eight toggle switches you click in the Devices panel |
+
+Any other port is a plain latch: `OUT` stores a value and `IN` returns the last value written (00h if never written). The **Memory** panel shows every `DB`/`DW` variable and the stack live. A program finishes when it executes `HLT`. A Run that executes 1,000,000 instructions without `HLT` stops with an "execution budget reached" message, so infinite loops are caught. Switch changes are recorded by tick, so step back and replay stay deterministic.
+
+Samples: array statistics (sum/min/max with labelled output), Hello world, sum 1..N with `LOOP`, bubble sort, Fibonacci into a `DW` array, and an LED/switch demo.
+
+## Railway Lab workspace
 
 | Control | Shortcut | What it does |
 |---|---|---|
@@ -148,8 +171,10 @@ src/
     scenarios.ts      scenario data and fault injection
     machine.ts        generic CPU + device core: checkpoints, seek, step-back, breakpoints, logs
     simulation.ts     Railway machine: CPU + I/O bus + world in lock-step
+    playground.ts     Playground machine: console, LEDs, switches and latch ports
   programs/samples.ts bundled example programs
-  ui/                 React: home page, Railway Lab workspace, Monaco editor, SVG renderer, debugger panels
+  programs/playgroundSamples.ts  Playground example programs
+  ui/                 React: landing page, Railway Lab, Playground, shared workbench, theme, Monaco editor, SVG renderer, debugger panels
 tests/                Vitest suites
 ```
 
@@ -159,8 +184,9 @@ tests/                Vitest suites
 
 ## Tests
 
-`npm test` runs 94 tests:
+`npm test` runs 105 tests:
 
 - `tests/assembler.test.ts`: number formats, labels, comments, EQU, and error messages (unknown or unsupported instructions, undefined labels with suggestions, size mismatches, overflowing immediates, invalid memory operands, DB/DW data layout, directives, bad IN/OUT forms).
 - `tests/cpu.test.ts`: register aliasing, arithmetic and logic flags, signed and unsigned conditional jumps, LOOP variants, CALL/RET/PUSH/POP, memory operands and arrays, IN/OUT through a fake bus, the execution budget on `L: JMP L`, and runtime faults.
 - `tests/railway.test.ts`: port bit mapping, barrier travel and limit switches, the detector sequence for a passing train, fault injection, vehicles stopping, OUT/IN integration, every sample against the relevant scenarios (zero violations for the correct controllers, violations for the naive one), changes to the assembly code changing the outcome, run-to-run determinism, step-back/seek equivalence, and breakpoints.
+- `tests/playground.test.ts`: console output (character, decimal, hex), switches and LEDs, deterministic replay of switch changes, the exact output of every Playground sample, and the execution budget on a program that never halts.
